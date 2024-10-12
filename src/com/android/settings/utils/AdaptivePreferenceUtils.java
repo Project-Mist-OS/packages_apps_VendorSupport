@@ -63,7 +63,8 @@ public class AdaptivePreferenceUtils {
     }
     
     public static int getSettingsTheme(Context context) {
-        return Settings.System.getInt(context.getContentResolver(), "settings_theme_style", 0);
+        /* return Settings.System.getInt(context.getContentResolver(), "settings_theme_style", 0);*/
+        return 1;
     }
     
     public static int getLayoutResourceId(Context context, String positionString, boolean isHomePage) {
