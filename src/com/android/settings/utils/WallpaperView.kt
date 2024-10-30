@@ -18,18 +18,25 @@ package com.android.settings.utils
 
 import android.app.WallpaperManager
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.drawable.BitmapDrawable
+import android.graphics.RenderEffect
+import android.graphics.Shader
 import android.graphics.drawable.Drawable
 import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.widget.ImageView
+import androidx.core.content.res.use
+import com.android.settings.R
 
-open class WallpaperView : ImageView {
+open class WallpaperView @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : ImageView(context, attrs, defStyleAttr) {
 
-    private val handler = Handler()
+    private val handler = Handler(Looper.getMainLooper())
     private var currentWallpaperDrawable: Drawable? = null
+    private var isBlurred: Boolean = false
 
     private val wallpaperChecker = object : Runnable {
         override fun run() {
@@ -38,27 +45,14 @@ open class WallpaperView : ImageView {
         }
     }
 
-    constructor(context: Context) : super(context) {
-        init()
-    }
-
-    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
-        init()
-    }
-
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(
-        context,
-        attrs,
-        defStyleAttr
-    ) {
-        init()
-    }
-
-    private fun init() {
+    init {
+        context.theme.obtainStyledAttributes(attrs, R.styleable.WallpaperView, 0, 0).use {
+            isBlurred = it.getBoolean(R.styleable.WallpaperView_blurred, false)
+        }
         setWallpaperPreview()
         handler.postDelayed(wallpaperChecker, 2000)
     }
-    
+
     protected open fun updateWallpaper() {
         val wallpaperManager = WallpaperManager.getInstance(context)
         val wallpaperDrawable: Drawable? = wallpaperManager.drawable
@@ -67,12 +61,22 @@ open class WallpaperView : ImageView {
             currentWallpaperDrawable = wallpaperDrawable
             wallpaperDrawable?.let {
                 setImageDrawable(it)
+                applyBlurEffect()
             }
         }
     }
 
     protected open fun setWallpaperPreview() {
         updateWallpaper()
+    }
+
+    private fun applyBlurEffect() {
+        if (isBlurred) {
+            val blurEffect = RenderEffect.createBlurEffect(100f, 100f, Shader.TileMode.MIRROR)
+            setRenderEffect(blurEffect)
+        } else {
+            setRenderEffect(null)
+        }
     }
 
     override fun onDetachedFromWindow() {
