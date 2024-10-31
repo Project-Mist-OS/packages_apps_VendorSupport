@@ -86,15 +86,16 @@ public class DynamicIconPreferenceView extends PreferenceImageView {
     }
 
     private void updateIconStyle() {
-        String styleValue = getSettingsIconStyle();
+        String styleValue = String.valueOf(getSettingsIconStyle());
         StyleAttributes attributes = styleMap.get(styleValue);
         if (attributes != null) {
             applyStyle(attributes);
         }
     }
 
-    private String getSettingsIconStyle() {
-        return Settings.System.getString(getContext().getContentResolver(), "settings_icon_style");
+    private int getSettingsIconStyle() {
+        return Settings.System.getIntForUser(
+            getContext().getContentResolver(), "settings_icon_style", 0, android.os.UserHandle.USER_CURRENT);
     }
 
     private void applyStyle(StyleAttributes attributes) {
