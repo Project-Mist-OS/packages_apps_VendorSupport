@@ -66,7 +66,7 @@ public class DynamicIconPreferenceView extends PreferenceImageView {
                 dpToPx(context, 40), dpToPx(context, 40), null, R.color.top_level_preference_text_color_primary,
                 null, ImageView.ScaleType.CENTER_INSIDE));
         styleMap.put("1", new StyleAttributes(resources.getDimensionPixelSize(R.dimen.top_level_icon_padding),
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                dpToPx(context, 48), dpToPx(context, 48),
                 R.drawable.custom_surface_color, R.color.top_level_preference_icon_tint, null, null));
         styleMap.put("2", new StyleAttributes(resources.getDimensionPixelSize(R.dimen.top_level_icon_padding),
                 dpToPx(context, 48), dpToPx(context, 48),
