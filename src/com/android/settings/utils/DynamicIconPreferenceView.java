@@ -35,6 +35,9 @@ import com.android.settings.R;
 
 public class DynamicIconPreferenceView extends PreferenceImageView {
 
+    private int maxWidth = dpToPx(getContext(), 52);
+    private int maxHeight = dpToPx(getContext(), 52);
+
     private String[] colorMap = {
             "#007aff", "#2fb151", "#fb7c47",
             "#fa7d4d", "#fbb404", "#e13e39"
@@ -148,5 +151,20 @@ public class DynamicIconPreferenceView extends PreferenceImageView {
             this.bgTint = bgTint;
             this.scaleType = scaleType;
         }
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+        if (widthMode == MeasureSpec.AT_MOST || widthMode == MeasureSpec.EXACTLY) {
+            widthSize = Math.min(widthSize, maxWidth);
+        }
+        if (heightMode == MeasureSpec.AT_MOST || heightMode == MeasureSpec.EXACTLY) {
+            heightSize = Math.min(heightSize, maxHeight);
+        }
+        setMeasuredDimension(widthSize, heightSize);
     }
 }
