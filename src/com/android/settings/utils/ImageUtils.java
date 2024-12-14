@@ -51,7 +51,7 @@ public class ImageUtils {
             Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
             String imageFileName = filePrefix + "_" + timeStamp + ".png";
-            File directory = new File("/sdcard/risingOS/" + featurePath);
+            File directory = new File("/sdcard/MistOS/" + featurePath);
             if (!directory.exists() && !directory.mkdirs()) {
                 return null;
             }
