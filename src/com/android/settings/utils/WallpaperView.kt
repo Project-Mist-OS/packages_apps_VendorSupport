@@ -18,15 +18,18 @@ package com.android.settings.utils
 
 import android.app.WallpaperManager
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.RenderEffect
 import android.graphics.Shader
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.os.Handler
-import android.os.Looper
 import android.util.AttributeSet
 import android.widget.ImageView
 import androidx.core.content.res.use
 import com.android.settings.R
+import kotlinx.coroutines.*
+import java.io.ByteArrayOutputStream
 
 open class WallpaperView @JvmOverloads constructor(
     context: Context,
@@ -34,23 +37,25 @@ open class WallpaperView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : ImageView(context, attrs, defStyleAttr) {
 
-    private val handler = Handler(Looper.getMainLooper())
     private var currentWallpaperDrawable: Drawable? = null
     private var isBlurred: Boolean = false
-
-    private val wallpaperChecker = object : Runnable {
-        override fun run() {
-            setWallpaperPreview()
-            handler.postDelayed(this, 2000)
-        }
-    }
+    private var cachedBitmap: Bitmap? = null
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     init {
         context.theme.obtainStyledAttributes(attrs, R.styleable.WallpaperView, 0, 0).use {
             isBlurred = it.getBoolean(R.styleable.WallpaperView_blurred, false)
         }
-        setWallpaperPreview()
-        handler.postDelayed(wallpaperChecker, 2000)
+        startWallpaperUpdates()
+    }
+
+    private fun startWallpaperUpdates() {
+        scope.launch {
+            while (isActive) {
+                setWallpaperPreview()
+                delay(2000)
+            }
+        }
     }
 
     protected open fun updateWallpaper() {
@@ -59,15 +64,35 @@ open class WallpaperView @JvmOverloads constructor(
 
         if (wallpaperDrawable != currentWallpaperDrawable) {
             currentWallpaperDrawable = wallpaperDrawable
-            wallpaperDrawable?.let {
-                setImageDrawable(it)
+            wallpaperDrawable?.let { drawable ->
+                setImageDrawable(drawable)
                 applyBlurEffect()
+                scope.launch(Dispatchers.IO) {
+                    val compressedBitmap = compress(drawable)
+                    withContext(Dispatchers.Main) {
+                        compressedBitmap?.let { bitmap ->
+                            cachedBitmap = bitmap
+                            setImageDrawable(BitmapDrawable(resources, bitmap))
+                        }
+                    }
+                }
             }
+        } else if (cachedBitmap != null) {
+            setImageDrawable(BitmapDrawable(resources, cachedBitmap))
+            applyBlurEffect()
         }
     }
 
     protected open fun setWallpaperPreview() {
         updateWallpaper()
+    }
+
+    private fun compress(drawable: Drawable): Bitmap? {
+        val bitmap = (drawable as? BitmapDrawable)?.bitmap ?: return null
+        val outputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSLESS, 100, outputStream)
+        val byteArray = outputStream.toByteArray()
+        return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
     }
 
     private fun applyBlurEffect() {
@@ -81,6 +106,6 @@ open class WallpaperView @JvmOverloads constructor(
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        handler.removeCallbacks(wallpaperChecker)
+        scope.cancel()
     }
 }
